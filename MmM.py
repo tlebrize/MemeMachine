@@ -2,12 +2,14 @@ import pyglet, sys, os, collections
 from pyglet.window import key
 
 class Viewer(pyglet.window.Window):
-	def __init__(self):
-		super(Viewer, self).__init__(800, 800, resizable=True, )
+	def __init__(self, files_directory):
+		super(Viewer, self).__init__(800, 800, resizable=True)
 		self.format = ['.png', '.jpg', '.gif']
 		i = 0
-		self.files = collections.OrderedDict({sys.argv[1] + '/' + filename: None
-			for filename in os.listdir(sys.argv[1]) if filename[-4:] in self.format})
+		self.files = collections.OrderedDict({files_directory + '/' + filename: None
+			for filename in os.listdir(files_directory) if filename[-4:] in self.format})
+		if len(self.files) == 0:
+			raise Exception('No files found.')
 		for filename in self.files:
 			print(i, ':', filename)
 			i += 1
@@ -82,6 +84,6 @@ class Viewer(pyglet.window.Window):
 
 
 if __name__ == '__main__':
-	win = Viewer()
+	win = Viewer('.' if len(sys.argv) < 2 else sys.argv[1])
 	pyglet.app.run()
 
