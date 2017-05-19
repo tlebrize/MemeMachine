@@ -1,16 +1,20 @@
-SPACE
+`SPACE`
 	place current
-TAB 0 1 2 3 4 5 6 7 8 9
+
+`TAB 0 1 2 3 4 5 6 7 8 9`
 	switch current
-UP DOWN LEFT RIGHT
+
+`UP DOWN LEFT RIGHT`
 	move current
-RETURN
+
+`RETURN`
 	save
-screen resize
-	resize screen
-Q W
+
+`Q W`
 	reisze current
-A S
+
+`A S`
 	rotate current
-ESCAPE
+
+`ESCAPE`
 	quit
