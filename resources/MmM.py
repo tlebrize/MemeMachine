@@ -1,26 +1,40 @@
 import pyglet, sys, os, collections
 from pyglet.window import key
+from . import scene
 
-class Viewer(pyglet.window.Window):
-	def __init__(self, files_directory):
-		super(Viewer, self).__init__(800, 800, resizable=True)
-		self.format = ['.png', '.jpg', '.gif']
-		i = 0
-		self.files = collections.OrderedDict({files_directory + '/' + filename: None
-			for filename in os.listdir(files_directory) if filename[-4:] in self.format})
+class MemeMachine(scene.TkScene):
+	
+	FORMAT = ['.png', '.jpg', '.gif']
+
+	def __init__(self, world, files_directory):
+		super(MemeMachine, self).__init__(world)
+		self.files_directory = files_directory
+		self.entry()
+
+	def entry(self):
+		pyglet.gl.glClearColor(0, 0, 0, 0)
+		self.files = collections.OrderedDict({self.files_directory + '/' + filename: None
+			for filename in os.listdir(self.files_directory) if filename[-4:] in MemeMachine.FORMAT})
 		if len(self.files) == 0:
 			raise Exception('No files found.')
-		for filename in self.files:
-			print(i, ':', filename)
-			i += 1
 		self.current_index = 0
 		self.current = None
 		self.scale = 1
-		self.position = (self.width // 2, self.height // 2)
-		self.load()
+		self.position = (self.world.window.width // 2,
+						 self.world.window.height // 2)
+		self.open_file()
 		self.placed = []
 
-	def load(self):
+	def exit(self):
+		del self.files
+		self.current_index = 0
+		self.current = None
+		self.scale = 1
+		self.position = (self.world.window.width // 2,
+						 self.world.window.height // 2)
+		self.placed = []
+
+	def open_file(self):
 		filename = list(self.files)[self.current_index]
 		if self.current:
 			self.position = (self.current.x, self.current.y)
@@ -28,15 +42,8 @@ class Viewer(pyglet.window.Window):
 		if self.files[filename] is not None:
 			self.current = self.files[filename]
 		else:
-			if '.gif' in filename[-4:]:
-				animation = pyglet.image.load_animation(filename)
-				frames = pyglet.image.atlas.TextureBin()
-				animation.add_to_texture_bin(frames)
-				self.current = pyglet.sprite.Sprite(animation)
-			else:
-				image = pyglet.image.load(filename)
-				self.current = pyglet.sprite.Sprite(image)
-		self.set_caption(filename)
+			image = pyglet.image.load(filename)
+			self.current = pyglet.sprite.Sprite(image)
 		self.current.x = self.position[0]
 		self.current.y = self.position[1]
 		self.current.anchor_x = self.current.width // 2
@@ -44,7 +51,7 @@ class Viewer(pyglet.window.Window):
 		self.current.scale = self.scale
 
 	def on_draw(self):
-		self.clear()
+		self.world.window.clear()
 		for sprite in self.placed:
 			sprite.draw()
 		self.current.draw()
@@ -52,10 +59,10 @@ class Viewer(pyglet.window.Window):
 	def on_key_press(self, symbol, modifier):
 		if symbol in [48 + i for i in range(0, 10)]:
 			self.current_index = (symbol - 48) % len(self.files)
-			self.load()
+			self.open_file()
 		elif symbol == key.TAB:
 			self.current_index = (self.current_index + 1) % len(self.files)
-			self.load()
+			self.open_file()
 		elif symbol == key.Q:
 			self.current.scale += 0.1
 		elif symbol == key.W:
@@ -75,15 +82,9 @@ class Viewer(pyglet.window.Window):
 		elif symbol == key.SPACE:
 			self.placed.append(self.current)
 			self.current = None
-			self.load()
+			self.open_file()
 		elif symbol == key.RETURN:
 			pyglet.image.get_buffer_manager().get_color_buffer().save('output.png')
 		elif symbol == key.ESCAPE:
-			self.clear()
-			exit()
-
-
-if __name__ == '__main__':
-	win = Viewer('.' if len(sys.argv) < 2 else sys.argv[1])
-	pyglet.app.run()
-
+			self.world.window.clear()
+			self.world.transition("main")
